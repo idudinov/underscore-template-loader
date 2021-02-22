@@ -1,6 +1,6 @@
-var path = require('path');
-var loaderUtils = require('loader-utils');
-var attributeParser = require('./lib/attributeParser');
+import Path from 'path';
+import * as LoaderUtils from 'loader-utils';
+import { parseAttributes } from './lib/attributeParser';
 var macroParser = require('./lib/macroParser');
 
 // Try getting underscore first, then lodash

@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "strictBindCallApply": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "target": "ES2019",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "jsx": "react",
+    "allowJs": true,
+    "declaration": true,
+    "declarationMap": true,
+    "baseUrl": "src",
+    "paths": {
+
+    }
+  },
+  "include": [
+    "./index.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "./test"
+  ],
+  "references": []
+}

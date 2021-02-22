@@ -1,78 +1,80 @@
-var Parser = require("fastparse");
+import * as Parser from 'fastparse';
 
 // Macro class
-var Macro = function (name, index, length) {
-    this.name = name;
-    this.start = index;
-    this.length = length;
-    this.args = [];
-};
+class Macro {
 
-Macro.prototype.getArguments = function() {
-    var args = [];
+    start: number;
+    args = [];
 
-    this.args.forEach(function (arg) {
-        args.push(arg.value);
-    });
+    constructor(readonly name, index: number, readonly length) {
+        this.start = index;
+    }
 
-    return args;
-};
+    getArguments() {
+        return this.args.map(arg => arg.value);
+    }
 
-// MacroContext class
-var MacroContext = function (isMacroAvailable, usid) {
-    this.currentMacro = null;
-    this.matches = [];
-    this.isMacroAvailable = isMacroAvailable;
-    this.usid = usid;
-    this.ident = function () {
-        return "____" + usid + Math.random() + "____";
+}
+
+class MacroContext {
+    currentMacro = null;
+    matches = [];
+    data = {};
+
+    constructor(readonly isMacroAvailable, readonly usid) {
+    }
+
+    ident() {
+        return "____" + this.usid + Math.random() + "____";
+    }
+
+    replaceMatches(content: string) {
+        const parts = [content];
+        this.matches.reverse();
+
+        this.matches.forEach((match) => {
+            let ident;
+            do {
+                ident = this.ident();
+            } while (this.data[ident]);
+
+            this.data[ident] = match;
+
+            const x = parts.pop();
+            parts.push(x.substr(match.start + match.length));
+            parts.push(ident);
+            parts.push(x.substr(0, match.start));
+        });
+
+        parts.reverse();
+        return parts.join('');
+    }
+
+    resolveMacros(content, macros) {
+        var regex = new RegExp('____' + this.usid + '[0-9\\.]+____', 'g');
+        var self = this;
+
+        // Replace macro expressions
+        content = content.replace(regex, function (match) {
+            if (!self.data[match]) {
+                return match;
+            }
+
+            var macro = self.data[match];
+            return "' + " +  macros[macro.name].apply(null, macro.getArguments()) + " + '";
+        });
+
+        // Replace escaped macros
+        content = content.replace(/\\+(@\w+)/, function (match, expr) {
+            return expr;
+        });
+
+        return content;
     };
-    this.data = {};
+
 };
 
-MacroContext.prototype.replaceMatches = function(content) {
-    var self = this;
-    content = [content];
-    this.matches.reverse();
 
-    this.matches.forEach(function (match) {
-        do {
-            var ident = self.ident();
-        } while (self.data[ident]);
-
-        self.data[ident] = match;
-
-        var x = content.pop();
-        content.push(x.substr(match.start + match.length));
-        content.push(ident);
-        content.push(x.substr(0, match.start));
-    });
-
-    content.reverse();
-    return content.join('');
-};
-
-MacroContext.prototype.resolveMacros = function (content, macros) {
-    var regex = new RegExp('____' + this.usid + '[0-9\\.]+____', 'g');
-    var self = this;
-
-    // Replace macro expressions
-    content = content.replace(regex, function (match) {
-        if (!self.data[match]) {
-            return match;
-        }
-
-        var macro = self.data[match];
-        return "' + " +  macros[macro.name].apply(null, macro.getArguments()) + " + '";
-    });
-
-    // Replace escaped macros
-    content = content.replace(/\\+(@\w+)/, function (match, expr) {
-        return expr;
-    });
-
-    return content;
-};
 
 // Parses a macro string argument
 var processStringArg = function (match, value, index, length) {

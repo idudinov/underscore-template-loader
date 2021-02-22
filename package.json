@@ -37,17 +37,26 @@
     "url": "https://github.com/emaphp/underscore-template-loader.git"
   },
   "dependencies": {
-    "fastparse": "^1.1.1",
-    "loader-utils": "^0.2.11"
+    "fastparse": "^1.1.2",
+    "loader-utils": "^2.0.0"
   },
   "devDependencies": {
-    "chai": "^3.2.0",
-    "chai-string": "^1.1.2",
+    "@types/loader-utils": "^2.0.1",
+    "@types/underscore": "^1.10.24",
+    "@types/webpack": "^4.41.26",
+    "chai": "^4.3.0",
+    "chai-string": "^1.5.0",
     "istanbul": "^0.3.18",
-    "mocha": "^2.2.5",
-    "underscore": "^1.8.3"
+    "mocha": "^8.3.0",
+    "typescript": "^4.1.5",
+    "underscore": "^1.12.0"
+  },
+  "peerDependencies": {
+    "underscore": "^1.12.0"
   },
   "scripts": {
+    "build": "tsc",
+    "build:w": "yarn build --watch",
     "test": "mocha",
     "cover": "istanbul cover node_modules/mocha/bin/_mocha"
   },
