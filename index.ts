@@ -1,33 +1,29 @@
 import Path from 'path';
 import * as LoaderUtils from 'loader-utils';
 import { parseAttributes } from './lib/attributeParser';
-var macroParser = require('./lib/macroParser');
+import { parseMacro, MacroContext } from './lib/macroParser';
+import type Webpack from 'webpack';
+import DefaultMacros from './lib/macros';
 
-// Try getting underscore first, then lodash
-var _;
-try {
-  _ = require('underscore');
-} catch (e) {
-  _ = require('lodash');
-}
+import _ from 'underscore';
 
 // Extendable arguments
-var macros = _.extend({}, require('./lib/macros'));
+const macros = _.extend({}, DefaultMacros);
 
-module.exports = function(content) {
+exports = function(this: Webpack.loader.LoaderContext, content) {
   this.cacheable && this.cacheable();
-  var callback = this.async();
+  const callback = this.async();
 
   // Default arguments
-  var root,
+  let root,
       parseMacros = true,
-      engine = false,
+      engine = false as false | string,
       withImports = false,
       attributes = ['img:src'],
       parseDynamicRoutes = false;
 
   // Parse arguments
-  var query = this.query instanceof Object ? this.query : loaderUtils.parseQuery(this.query);
+  var query = this.query instanceof Object ? this.query : LoaderUtils.parseQuery(this.query);
 
   if (_.isObject(query)) {
     root = query.root;
@@ -66,7 +62,7 @@ module.exports = function(content) {
 
     // Prepend a html comment with the filename in it
     if (query.prependFilenameComment) {
-      var filenameRelative = path.relative(query.prependFilenameComment, this.resource);
+      var filenameRelative = Path.relative(query.prependFilenameComment, this.resource);
       content = "\n<!-- " + filenameRelative + " -->\n" + content;
     }
 
@@ -82,26 +78,27 @@ module.exports = function(content) {
   }
 
   // Include additional macros
-  if (this.options && _.isObject(this.options.macros)) {
-    _.extend(macros, this.options.macros);
+  if (_.isObject(this.query.macros)) {
+    _.extend(macros, this.query.macros);
   }
 
   // Parse macros
+  let macrosContext: MacroContext;
   if (parseMacros) {
-    var macrosContext = macroParser(content, function (macro) {
+    macrosContext = parseMacro(content, function (macro) {
       return _.isFunction(macros[macro]);
     }, 'MACRO');
     content = macrosContext.replaceMatches(content);
   }
 
   // Parse attributes
-  var attributesContext = attributeParser(content, function (tag, attr) {
+  const attributesContext = parseAttributes(content, function (tag, attr) {
     return attributes.indexOf(tag + ':' + attr) != -1;
   }, 'ATTRIBUTE', root, parseDynamicRoutes);
   content = attributesContext.replaceMatches(content);
 
   // Compile template
-  var source = _.template(content).source;
+  let source = _.template(content).source;
 
   // Resolve macros
   if (parseMacros) {
@@ -126,4 +123,3 @@ module.exports = function(content) {
   callback(null, source);
 };
 
-module.exports._ = _;

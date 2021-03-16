@@ -1,7 +1,7 @@
-var loaderUtils = require('loader-utils');
+import * as LoaderUtils from 'loader-utils';
 
-var strRepeat = function (str, times) {
-    var result = '';
+const strRepeat = (str, times) => {
+    let result = '';
 
     for (var i = 0; i < times; i++) {
         result += str;
@@ -14,14 +14,14 @@ var strRepeat = function (str, times) {
 var objExtend = function (args, obj) {args = Array.prototype.slice.call(args);var _a = args.slice(1); _a.unshift(Object.assign(obj, args[0])); return _a;};
 
 // Default macros
-module.exports = {
+export default {
     require: function (resourcePath, args) {
       var argsExpr = args ? '(' + objExtend + ')' + '(arguments, ' + JSON.stringify(args) + ')' : 'arguments';
-      return "require(" + JSON.stringify(loaderUtils.urlToRequest(resourcePath)) + ").apply(null," + argsExpr + ")";
+      return "require(" + JSON.stringify(LoaderUtils.urlToRequest(resourcePath)) + ").apply(null," + argsExpr + ")";
     },
 
     include: function (resourcePath) {
-        return "require(" + JSON.stringify(loaderUtils.urlToRequest(resourcePath)) + ")";
+        return "require(" + JSON.stringify(LoaderUtils.urlToRequest(resourcePath)) + ")";
     },
 
     br: function (times) {

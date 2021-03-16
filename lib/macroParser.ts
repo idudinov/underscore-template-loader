@@ -1,12 +1,11 @@
-import * as Parser from 'fastparse';
+import Parser from 'fastparse';
 
-// Macro class
 class Macro {
 
     start: number;
     args = [];
 
-    constructor(readonly name, index: number, readonly length) {
+    constructor(readonly name, index: number, public length) {
         this.start = index;
     }
 
@@ -16,8 +15,8 @@ class Macro {
 
 }
 
-class MacroContext {
-    currentMacro = null;
+export class MacroContext {
+    currentMacro: Macro = null;
     matches = [];
     data = {};
 
@@ -50,22 +49,21 @@ class MacroContext {
         return parts.join('');
     }
 
-    resolveMacros(content, macros) {
-        var regex = new RegExp('____' + this.usid + '[0-9\\.]+____', 'g');
-        var self = this;
+    resolveMacros(content: string, macros) {
+        const regex = new RegExp('____' + this.usid + '[0-9\\.]+____', 'g');
 
         // Replace macro expressions
-        content = content.replace(regex, function (match) {
-            if (!self.data[match]) {
+        content = content.replace(regex, (match) => {
+            if (!this.data[match]) {
                 return match;
             }
 
-            var macro = self.data[match];
+            const macro = this.data[match];
             return "' + " +  macros[macro.name].apply(null, macro.getArguments()) + " + '";
         });
 
         // Replace escaped macros
-        content = content.replace(/\\+(@\w+)/, function (match, expr) {
+        content = content.replace(/\\+(@\w+)/, (match, expr) => {
             return expr;
         });
 
@@ -77,7 +75,7 @@ class MacroContext {
 
 
 // Parses a macro string argument
-var processStringArg = function (match, value, index, length) {
+const processStringArg = function (this: MacroContext, match, value, index, length) {
     if (!this.currentMacro) return;
     this.currentMacro.args.push({
         start: index + value.length,
@@ -88,7 +86,7 @@ var processStringArg = function (match, value, index, length) {
 };
 
 // Parses a macro numeric argument
-var processNumArg = function (match, value, index, length) {
+const processNumArg = function (this: MacroContext, match, value, index, length) {
     if (!this.currentMacro) return;
     this.currentMacro.args.push({
         start: index + value.length,
@@ -99,7 +97,7 @@ var processNumArg = function (match, value, index, length) {
 };
 
 // Parses a macro boolean argument
-var processBooleanArg = function (match, value, index, length) {
+const processBooleanArg = function (this: MacroContext, match, value, index, length) {
     if (!this.currentMacro) return;
     this.currentMacro.args.push({
         start: index + value.length,
@@ -109,7 +107,7 @@ var processBooleanArg = function (match, value, index, length) {
     });
 };
 
-var processObjectArg = function (match, value, index, length) {
+const processObjectArg = function (this: MacroContext, match, value, index, length) {
   if (!this.currentMacro) return;
   this.currentMacro.args.push({
     start: index + value.length,
@@ -120,17 +118,17 @@ var processObjectArg = function (match, value, index, length) {
 };
 
 // Parser configuration
-var specs = {
+const specs = {
     outside: {
-        "^@(\\w+)\\(|([^\\\\])@(\\w+)\\(": function (match, name, prefix, _name, index, length) {
-            var name = name || _name;
+        "^@(\\w+)\\(|([^\\\\])@(\\w+)\\(": function (this: MacroContext, match, name, prefix, _name, index, length) {
+            name = name || _name;
 
             if (!this.isMacroAvailable(name)) {
                 this.currentMacro = null;
                 return 'inside';
             }
 
-            var macro = new Macro(name, prefix ? index + 1 : index, length);
+            const macro = new Macro(name, prefix ? index + 1 : index, length);
             this.matches.push(macro);
             this.currentMacro = macro;
             return 'inside';
@@ -138,7 +136,7 @@ var specs = {
     },
 
     inside: {
-        "\\)": function (match, index) {
+        "\\)": function (this: MacroContext, match, index) {
             if (this.currentMacro !== null) {
                 this.currentMacro.length = 1 + index - this.currentMacro.start;
             }
@@ -153,9 +151,9 @@ var specs = {
     }
 };
 
-var parser = new Parser(specs);
+const parser = new Parser<MacroContext>(specs);
 
-module.exports = function parse(html, isMacroAvailable, usid) {
-    var context = new MacroContext(isMacroAvailable, usid);
+export function parseMacro(html, isMacroAvailable, usid) {
+    const context = new MacroContext(isMacroAvailable, usid);
     return parser.parse('outside', html, context);
 };

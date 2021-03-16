@@ -1,6 +1,6 @@
 import * as Path from 'path';
 import * as Url from 'url';
-import * as Parser from 'fastparse';
+import Parser from 'fastparse';
 import * as LoaderUtils from 'loader-utils';
 
 import _ from 'underscore';
@@ -166,7 +166,7 @@ var specs = {
     }
 };
 
-var parser = new Parser(specs);
+var parser = new Parser<AttributeContext>(specs);
 
 export function parseAttributes(html, isRelevantTagAttr, usid, root, parseDynamicRoutes) {
     var context = new AttributeContext(isRelevantTagAttr, usid, root, parseDynamicRoutes);
